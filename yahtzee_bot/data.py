@@ -1,3 +1,4 @@
+from copy import copy
 import numpy as np
 
 
@@ -17,6 +18,10 @@ class CollectSampleExperiments():
         Maximum value of a dice
     n_boxes : int
         Number of boxes to fill with one for the yahtzee bonuses
+    normalization_boxes_reward : float
+        Normalization constant for the boxes that helps the neural network by having almost only values between 0 and 1
+    normalization_final_reward : float
+        Normalization constant for the final reward that helps the neural network by having almost only values between 0 and 1
     model_dice_1 : keras model
         Neural network that generates the best combination of dice to keep in the first round
     model_dice_2 : keras model
@@ -34,18 +39,21 @@ class CollectSampleExperiments():
         Sample states played by the model box
     """
 
-    def __init__(self, n_games, n_dices, dice_max_value, n_boxes, model_dice_1, model_dice_2, model_box):
+    def __init__(self, n_games, n_dices, dice_max_value, n_boxes, normalization_boxes_reward, normalization_final_reward, model_dice_1, model_dice_2, model_box):
         self.n_games = n_games
         self.n_dices = n_dices
         self.dice_max_value = dice_max_value
         self.n_boxes = n_boxes
+        self.normalization_boxes_reward = normalization_boxes_reward
+        self.normalization_final_reward = normalization_final_reward
         self.model_dice_1 = model_dice_1
         self.model_dice_2 = model_dice_2
         self.model_box = model_box
 
     def initialize(self):
         self.value_box = np.zeros(
-            (self.n_games, self.n_boxes), dtype=np.float32)
+            (self.n_games, self.n_boxes+1), dtype=np.float32)
+        # +1 because of the Yahtzee bonus
         self.is_box_checked = np.zeros(
             (self.n_games, self.n_boxes), dtype=np.int32)
         self.dice = np.zeros(
@@ -66,15 +74,6 @@ class CollectSampleExperiments():
         - Determines which games have a Yahtzee or Joker bonus
 
         - Determines, for games where there is a Yahtzee bonus or a Joker, which boxes are checkable
-
-
-        Returns
-        ----------
-        is_any_box_reached : array
-            1 if a box has been reached, 0 else
-
-        available_boxes : array
-            Every box that the bot can check
         """
         self.available_boxes = np.zeros(
             (self.n_games, self.n_boxes), dtype=np.int32)
@@ -185,63 +184,171 @@ class CollectSampleExperiments():
         self.available_boxes[(1-self.is_box_checked)[is_third_joker]] = 1
 
     def determine_intermediate_reward(self):
-        reward = np.zeros(self.n_games, dtype=np.float32)
 
         # Upper Section
 
         # Aces
-        reward[self.decision == 0] = self.n_identical_dices[self.decision == 0, 0]
+        self.value_box[self.decision == 0, 0] = self.n_identical_dices[self.decision ==
+                                                                       0, 0] * self.is_any_box_reached[self.decision == 0]
 
         # Twos
-        reward[self.decision == 1] = self.n_identical_dices[self.decision == 1, 1]*2
+        self.value_box[self.decision == 1, 1] = self.n_identical_dices[self.decision ==
+                                                                       1, 1] * self.is_any_box_reached[self.decision == 1]*2
 
         # Threes
-        reward[self.decision == 2] = self.n_identical_dices[self.decision == 2, 2]*3
+        self.value_box[self.decision == 2, 2] = self.n_identical_dices[self.decision ==
+                                                                       2, 2] * self.is_any_box_reached[self.decision == 2]*3
 
         # Fours
-        reward[self.decision == 3] = self.n_identical_dices[self.decision == 3, 3]*4
+        self.value_box[self.decision == 3, 3] = self.n_identical_dices[self.decision ==
+                                                                       3, 3] * self.is_any_box_reached[self.decision == 3]*4
 
         # Fives
-        reward[self.decision == 4] = self.n_identical_dices[self.decision == 4, 4]*5
+        self.value_box[self.decision == 4, 4] = self.n_identical_dices[self.decision ==
+                                                                       4, 4] * self.is_any_box_reached[self.decision == 4]*5
 
         # Sixes
-        reward[self.decision == 5] = self.n_identical_dices[self.decision == 5, 5]*6
+        self.value_box[self.decision == 5, 5] = self.n_identical_dices[self.decision ==
+                                                                       5, 5] * self.is_any_box_reached[self.decision == 5]*6
 
         # Lower Section
 
         # 3 of a kind
-        reward[self.decision == 6] = np.sum(
-            self.n_identical_dices[self.decision == 6]*np.arange(1, 7), axis=1)
+        self.value_box[self.decision == 6, 6] = np.sum(
+            self.n_identical_dices[self.decision == 6]*np.arange(1, 7), axis=1) * self.is_any_box_reached[self.decision == 6]
 
         # 4 of a kind
-        reward[self.decision == 7] = np.sum(
-            self.n_identical_dices[self.decision == 7]*np.arange(1, 7), axis=1)
+        self.value_box[self.decision == 7, 7] = np.sum(
+            self.n_identical_dices[self.decision == 7]*np.arange(1, 7), axis=1) * self.is_any_box_reached[self.decision == 7]
 
         # Full House
-        reward[self.decision == 8] = 25
+        self.value_box[self.decision == 8, 8] = 25 * \
+            self.is_any_box_reached[self.decision == 8]
 
         # Small Straight
-        reward[self.decision == 9] = 30
+        self.value_box[self.decision == 9, 9] = 30 * \
+            self.is_any_box_reached[self.decision == 9]
 
         # Large Straight
-        reward[self.decision == 10] = 40
+        self.value_box[self.decision == 10, 10] = 40 * \
+            self.is_any_box_reached[self.decision == 10]
 
         # Chance
-        reward[self.decision == 11] = np.sum(
-            self.n_identical_dices[self.decision == 11]*np.arange(1, 7), axis=1)
+        self.value_box[self.decision == 11, 11] = np.sum(
+            self.n_identical_dices[self.decision == 11]*np.arange(1, 7), axis=1) * self.is_any_box_reached[self.decision == 11]
 
         # Yahtzee
-        reward[self.decision == 12] = 50
+        self.value_box[self.decision == 12, 12] = 50 * \
+            self.is_any_box_reached[self.decision == 12]
 
         # Yahtzee bonus
-        reward[self.decision == 13] = 100
+        self.value_box[self.is_yahtzee_bonus == 1, 13] += 100
 
-        self.value_box[np.arange(0, self.n_games), self.decision] += reward
-
-        return reward
+        for i in range(self.n_games):
+            self.is_box_checked[i, self.decision[i]] = 1
 
     def determine_final_reward(self):
-        pass
+        score_upper_section = np.sum(self.value_box[:, :6], axis=1)
+        bonus = (score_upper_section >= 63)*35
+        total_score_upper_section = score_upper_section + bonus
+        total_score_lower_section = np.sum(self.value_box[:, 6:], axis=1)
+        grand_total = total_score_upper_section + total_score_lower_section
+        return grand_total
+
+    def update_dice(self, dice):
+        for i in range(self.n_games):
+            for j in range(self.n_dices):
+                self.dice[i, dice[i, j]+6*j] = 1
 
     def generate_sample(self):
-        pass
+        self.initialize()
+
+        for _ in range(self.n_boxes):
+            roll_dice = np.random.randint(
+                0, self.dice_max_value, (self.n_games, self.n_dices))
+            self.update_dice(roll_dice)
+
+            # First dice roll
+
+            states = np.concatenate(
+                [self.is_box_checked, self.value_box/self.normalization_boxes_reward, self.dice], axis=1)
+            outputs = self.model_dice_1(states)[0].numpy()
+            try:
+                outputs_reweighted = outputs/outputs.sum(axis=1)
+            except ValueError:
+                print(
+                    f"The output of the neural network is not valid. Here is the output :{outputs}")
+
+            retained_dice = np.zeros(
+                (self.n_games, self.n_dices), dtype=np.uint8)
+            for i in range(self.n_games):
+                dice_combinaison = np.random.choice(
+                    np.arange(2**self.n_dices), p=outputs_reweighted[i])
+
+                self.history_model_dice_1[i] += copy(
+                    [(states[i], dice_combinaison, 0)])
+
+                retained_dice[i] = np.unpackbits(np.uint8(dice_combinaison))[
+                    8-self.n_dices:]
+            new_dices = np.random.randint(
+                0, self.dice_max_value, (self.n_games, self.n_dices))
+            updated_dices = roll_dice*retained_dice+new_dices*(1-retained_dice)
+            self.update_dice(updated_dices)
+
+            # Second dice roll
+
+            states = np.concatenate(
+                [self.is_box_checked, self.value_box/self.normalization_boxes_reward, self.dice], axis=1)
+            outputs = self.model_dice_2(states)[0].numpy()
+            try:
+                outputs_reweighted = outputs/outputs.sum(axis=1)
+            except ValueError:
+                print(
+                    f"The output of the neural network is not valid. Here is the output :{outputs}")
+
+            retained_dice = np.zeros(
+                (self.n_games, self.n_dices), dtype=np.uint8)
+            for i in range(self.n_games):
+                dice_combinaison = np.random.choice(
+                    np.arange(2**self.n_dices), p=outputs_reweighted[i])
+
+                self.history_model_dice_2[i] += copy(
+                    [(states[i], dice_combinaison, 0)])
+
+                retained_dice[i] = np.unpackbits(np.uint8(dice_combinaison))[
+                    8-self.n_dices:]
+            new_dices = np.random.randint(
+                0, self.dice_max_value, (self.n_games, self.n_dices))
+            updated_dices = roll_dice*retained_dice+new_dices*(1-retained_dice)
+            self.update_dice(updated_dices)
+
+            # Box to check
+
+            self.available_moves()
+            states = [np.concatenate([self.is_box_checked, self.value_box/self.normalization_boxes_reward,
+                                     self.dice, self.available_moves], axis=1), self.available_boxes]
+
+            outputs = self.model_box(states)[0].numpy()
+            try:
+                outputs_reweighted = outputs/outputs.sum(axis=1)
+            except ValueError:
+                print(
+                    f"The output of the neural network is not valid. Here is the output :{outputs}")
+            self.decision = np.zeros(self.n_games, dtype=np.int32)
+            for i in range(self.n_games):
+                self.decision[i] = np.random.choice(
+                    np.arange(self.n_boxes), p=outputs_reweighted[i])
+
+                self.history_model_box[i] += copy(
+                    [((states[0][i], states[1][i]), self.decision[i], 0)])
+
+            self.determine_intermediate_reward()
+
+        grand_total = self.determine_final_reward()
+
+        for i in range(self.n_games):
+            for j in range(self.n_boxes):
+                reward = grand_total[i]/self.normalization_final_reward
+                self.history_model_dice_1[i][j][2] = copy(reward)
+                self.history_model_dice_2[i][j][2] = copy(reward)
+                self.history_model_box[i][j][2] = copy(reward)
