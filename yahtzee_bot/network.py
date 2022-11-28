@@ -8,6 +8,17 @@ from keras.activations import softmax
 from keras.activations import relu
 
 
+class Unit():
+    """
+    Class that manages the number of neurons par layer
+    """
+    def __init__(self, hidden, hidden_value, hidden_policy, output_policy):
+        self.hidden = hidden
+        self.hidden_value = hidden_value
+        self.hidden_policy = hidden_policy
+        self.output_policy = output_policy
+
+
 class DiceReRoll(keras.Model):
     """
     Model that generates the best combination of dice to re-roll

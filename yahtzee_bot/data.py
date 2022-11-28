@@ -122,8 +122,8 @@ class CollectSampleExperiments():
             self.n_identical_dices[:, 1:4] > 0).all(axis=1) + (self.n_identical_dices[:, 2:] > 0).all(axis=1), 0, 1)
 
         # Large Straight
-        self.available_boxes[:, 10] = (self.n_identical_dices[:, :3] > 0).all(
-            axis=1) + (self.n_identical_dices[:, 2:] > 0).all(axis=1)
+        self.available_boxes[:, 10] = (self.n_identical_dices[:, :4] > 0).all(
+            axis=1) + (self.n_identical_dices[:, 1:] > 0).all(axis=1)
 
         # Chance
         self.available_boxes[:, 11] = 1
@@ -137,6 +137,9 @@ class CollectSampleExperiments():
         available_boxes_mask = self.available_boxes*(1-self.is_box_checked)
         no_available_box = (
             self.available_boxes[:, 12] == 0)*(available_boxes_mask == 0).all(axis=1)
+
+        self.available_boxes[no_available_box] = 1 - \
+            self.is_box_checked[no_available_box]
 
         self.is_any_box_reached[no_available_box] = 0
 
@@ -155,6 +158,11 @@ class CollectSampleExperiments():
         self.is_joker[(self.available_boxes[:, 12] *
                        self.is_box_checked[:, 12]).astype(bool)] = 1
 
+        no_joker_and_available_actions = np.clip(
+            (1-no_available_box-self.is_joker), 0, 1).astype(bool)
+
+        self.available_boxes[no_joker_and_available_actions] = available_boxes_mask[no_joker_and_available_actions]
+
         # Add self.is_yahtzee bonus to the reward function
 
         # Then, we modify the available_boxes array according to the rules
@@ -166,22 +174,30 @@ class CollectSampleExperiments():
         is_second_joker = np.zeros(self.n_games, dtype=bool)
         is_third_joker = np.zeros(self.n_games, dtype=bool)
 
-        is_first_joker[(self.is_box_checked[self.is_joker, np.argmax(
-            self.dice[self.is_joker], axis=1)]).all()] = 1
-        is_second_joker[(self.is_box_checked[self.is_joker -
-                                             is_first_joker, 6:12]).all()] = 1
+        is_first_joker[self.is_joker.astype(bool)] = (1-self.is_box_checked[self.is_joker.astype(
+            bool), np.argmax(self.dice[self.is_joker.astype(bool)], axis=1)]).astype(bool)
+
+        is_second_joker[(self.is_joker - is_first_joker).astype(bool)] = (
+            self.is_box_checked[(self.is_joker - is_first_joker).astype(bool), 6:12] == 0).any(axis=1)
+
         is_third_joker = (self.is_joker - is_second_joker -
                           is_first_joker).astype(bool)
 
         # Determines, for games where there is a Yahtzee bonus or a Joker, which boxes are checkable
 
-        self.is_any_box_reached[is_third_joker] = 1
+        self.is_any_box_reached[is_third_joker] = 0
 
+        self.available_boxes[is_first_joker] = 0
         self.available_boxes[is_first_joker, np.argmax(
-            self.dice[is_first_joker], axis=1)] = 1
-        self.available_boxes[(1-self.is_box_checked)
-                             [is_second_joker, 6:12]] = 1
-        self.available_boxes[(1-self.is_box_checked)[is_third_joker]] = 1
+            self.dice[is_first_joker.astype(bool)], axis=1)] = 1
+
+        self.available_boxes[is_second_joker] = 0
+        self.available_boxes[is_second_joker, 6:12] = (
+            1-self.is_box_checked)[is_second_joker, 6:12]
+
+        self.available_boxes[is_third_joker] = 0
+        self.available_boxes[is_third_joker] = (
+            1-self.is_box_checked)[is_third_joker].astype(bool)
 
     def determine_intermediate_reward(self):
 
