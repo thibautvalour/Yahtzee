@@ -272,6 +272,8 @@ class CollectSampleExperiments():
         return grand_total
 
     def update_dice(self, dice):
+        self.dice = np.zeros(
+            (self.n_games, self.n_dices*self.dice_max_value), dtype=np.int32)
         for i in range(self.n_games):
             for j in range(self.n_dices):
                 self.dice[i, dice[i, j]+6*j] = 1
@@ -285,16 +287,10 @@ class CollectSampleExperiments():
             self.update_dice(roll_dice)
 
             # First dice roll
-
             states = np.concatenate(
                 [self.is_box_checked, self.value_box/self.normalization_boxes_reward, self.dice], axis=1)
             outputs = self.model_dice_1(states)[0].numpy()
-            try:
-                outputs_reweighted = outputs/outputs.sum(axis=1)
-            except ValueError:
-                print(
-                    f"The output of the neural network is not valid. Here is the output :{outputs}")
-
+            outputs_reweighted = outputs/outputs.sum(axis=1, keepdims=True)
             retained_dice = np.zeros(
                 (self.n_games, self.n_dices), dtype=np.uint8)
             for i in range(self.n_games):
@@ -302,7 +298,7 @@ class CollectSampleExperiments():
                     np.arange(2**self.n_dices), p=outputs_reweighted[i])
 
                 self.history_model_dice_1[i] += copy(
-                    [(states[i], dice_combinaison, 0)])
+                    [[states[i], dice_combinaison, 0]])
 
                 retained_dice[i] = np.unpackbits(np.uint8(dice_combinaison))[
                     8-self.n_dices:]
@@ -316,12 +312,7 @@ class CollectSampleExperiments():
             states = np.concatenate(
                 [self.is_box_checked, self.value_box/self.normalization_boxes_reward, self.dice], axis=1)
             outputs = self.model_dice_2(states)[0].numpy()
-            try:
-                outputs_reweighted = outputs/outputs.sum(axis=1)
-            except ValueError:
-                print(
-                    f"The output of the neural network is not valid. Here is the output :{outputs}")
-
+            outputs_reweighted = outputs/outputs.sum(axis=1, keepdims=True)
             retained_dice = np.zeros(
                 (self.n_games, self.n_dices), dtype=np.uint8)
             for i in range(self.n_games):
@@ -329,7 +320,7 @@ class CollectSampleExperiments():
                     np.arange(2**self.n_dices), p=outputs_reweighted[i])
 
                 self.history_model_dice_2[i] += copy(
-                    [(states[i], dice_combinaison, 0)])
+                    [[states[i], dice_combinaison, 0]])
 
                 retained_dice[i] = np.unpackbits(np.uint8(dice_combinaison))[
                     8-self.n_dices:]
@@ -342,21 +333,17 @@ class CollectSampleExperiments():
 
             self.available_moves()
             states = [np.concatenate([self.is_box_checked, self.value_box/self.normalization_boxes_reward,
-                                     self.dice, self.available_moves], axis=1), self.available_boxes]
+                                     self.dice, self.available_boxes], axis=1), self.available_boxes.astype(np.float32)]
 
             outputs = self.model_box(states)[0].numpy()
-            try:
-                outputs_reweighted = outputs/outputs.sum(axis=1)
-            except ValueError:
-                print(
-                    f"The output of the neural network is not valid. Here is the output :{outputs}")
+            outputs_reweighted = outputs/outputs.sum(axis=1, keepdims=True)
             self.decision = np.zeros(self.n_games, dtype=np.int32)
             for i in range(self.n_games):
                 self.decision[i] = np.random.choice(
                     np.arange(self.n_boxes), p=outputs_reweighted[i])
 
                 self.history_model_box[i] += copy(
-                    [((states[0][i], states[1][i]), self.decision[i], 0)])
+                    [[(states[0][i], states[1][i]), self.decision[i], 0]])
 
             self.determine_intermediate_reward()
 

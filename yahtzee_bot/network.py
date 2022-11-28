@@ -12,6 +12,7 @@ class Unit():
     """
     Class that manages the number of neurons par layer
     """
+
     def __init__(self, hidden, hidden_value, hidden_policy, output_policy):
         self.hidden = hidden
         self.hidden_value = hidden_value
