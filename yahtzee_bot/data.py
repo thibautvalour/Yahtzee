@@ -278,6 +278,12 @@ class CollectSampleExperiments():
             for j in range(self.n_dices):
                 self.dice[i, dice[i, j]+6*j] = 1
 
+    def average_reward_statistic(self):
+        reward = self.normalization_final_reward*np.array([self.history_model_box[i][0][2] for i in range(self.n_games)], dtype=np.float32)
+        mean = np.mean(reward)
+        ecart = 1.96 * np.std(reward)/np.sqrt(self.n_games)
+        return np.around([mean-ecart,mean, mean+ecart]).astype(np.int32)
+
     def generate_sample(self):
         self.initialize()
 
