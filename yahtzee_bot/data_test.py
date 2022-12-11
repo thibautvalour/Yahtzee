@@ -1,7 +1,7 @@
 import numpy as np
 
-from data import CollectSampleExperiments
-from network import Unit, DiceReRoll, BoxChoice
+# from data import CollectSampleExperiments
+# from network import Unit, DiceReRoll, BoxChoice
 
 
 def test_initialize():
@@ -12,7 +12,7 @@ def test_initialize():
     model_dice_2 = DiceReRoll(unit_dice_2)
     model_box = BoxChoice(unit_box)
     collect_sample = CollectSampleExperiments(
-        10, 5, 6, 13, 50., 200., model_dice_1, model_dice_2, model_box)
+        10, 5, 6, 13, 50., 200., 0.99, model_dice_1, model_dice_2, model_box)
 
     collect_sample.initialize()
 
@@ -33,12 +33,12 @@ def test_initialize():
 def test_available_moves():
     unit_dice_1 = Unit(64, 32, 32, 32)
     unit_dice_2 = Unit(64, 32, 32, 32)
-    unit_box = Unit(64, 32, 32, 32)
+    unit_box = Unit(64, 32, 32, 13)
     model_dice_1 = DiceReRoll(unit_dice_1)
     model_dice_2 = DiceReRoll(unit_dice_2)
     model_box = BoxChoice(unit_box)
     collect_sample = CollectSampleExperiments(
-        7, 5, 6, 13, 50., 200., model_dice_1, model_dice_2, model_box)
+        7, 5, 6, 13, 50., 200., 0.99, model_dice_1, model_dice_2, model_box)
 
     collect_sample.initialize()
 
@@ -107,16 +107,18 @@ def test_determine_intermediate_reward():
 
     unit_dice_1 = Unit(64, 32, 32, 32)
     unit_dice_2 = Unit(64, 32, 32, 32)
-    unit_box = Unit(64, 32, 32, 32)
+    unit_box = Unit(64, 32, 32, 13)
     model_dice_1 = DiceReRoll(unit_dice_1)
     model_dice_2 = DiceReRoll(unit_dice_2)
     model_box = BoxChoice(unit_box)
     collect_sample = CollectSampleExperiments(
-        7, 5, 6, 13, 50., 200., model_dice_1, model_dice_2, model_box)
+        8, 5, 6, 13, 50., 200., 0.99, model_dice_1, model_dice_2, model_box)
 
     collect_sample.initialize()
 
-    collect_sample.decision = np.array([4, 11, 5, 9, 1, 10, 0], dtype=np.int32)
+    collect_sample.reward = np.zeros(collect_sample.n_games, dtype=np.float32)
+
+    collect_sample.decision = np.array([4, 11, 5, 9, 1, 10, 0, 2], dtype=np.int32)
 
     collect_sample.n_identical_dices = np.array([
         [0, 1, 0, 2, 2, 0],
@@ -125,7 +127,8 @@ def test_determine_intermediate_reward():
         [1, 3, 0, 0, 1, 0],
         [0, 5, 0, 0, 0, 0],
         [0, 0, 0, 0, 5, 0],
-        [0, 0, 0, 0, 0, 5]
+        [0, 0, 0, 0, 0, 5],
+        [0, 0, 3, 0, 1, 1]
     ], dtype=np.int32)
 
     collect_sample.value_box = np.array([
@@ -135,7 +138,8 @@ def test_determine_intermediate_reward():
         [3, 6, 9, 12, 15, 12,  0, 8, 25, 0, 0, 25, 50, 0],
         [2, 0, 6, 0, 20, 12,  0, 0, 0, 0, 0, 27, 0, 0],
         [6, 4, 15, 12, 10, 24,  25, 0, 0, 0, 0, 18, 50, 100],
-        [0, 2, 0, 4, 5, 6,  20, 20, 25, 30, 40, 18, 50, 0]
+        [0, 2, 0, 4, 5, 6,  20, 20, 25, 30, 40, 18, 50, 0],
+        [5, 10, 0, 20, 25, 30,  0, 0, 0, 0, 0, 0, 0, 0]
     ], dtype=np.float32)
 
     collect_sample.is_box_checked = np.array([
@@ -145,14 +149,15 @@ def test_determine_intermediate_reward():
         [1, 1, 1, 1, 1, 1,  1, 1, 1, 0, 0, 1, 1],
         [1, 0, 1, 1, 1, 1,  0, 0, 0, 0, 0, 1, 1],
         [1, 1, 1, 1, 1, 1,  1, 1, 0, 0, 0, 1, 1],
-        [0, 1, 0, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1]
+        [0, 1, 0, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 0, 1, 1, 1,  0, 0, 0, 0, 0, 0, 0]
     ], dtype=np.int32)
 
     collect_sample.is_any_box_reached = np.array(
-        [1, 1, 1, 0, 1, 1, 0], dtype=np.int32)
+        [1, 1, 1, 0, 1, 1, 0, 1], dtype=np.int32)
 
     collect_sample.is_yahtzee_bonus = np.array(
-        [0, 0, 0, 0, 0, 1, 1], dtype=np.int32)
+        [0, 0, 0, 0, 0, 1, 1, 0], dtype=np.int32)
 
     collect_sample.determine_intermediate_reward()
 
@@ -163,7 +168,8 @@ def test_determine_intermediate_reward():
         [3, 6, 9, 12, 15, 12,  0, 8, 25, 0, 0, 25, 50, 0],
         [2, 10, 6, 0, 20, 12,  0, 0, 0, 0, 0, 27, 0, 0],
         [6, 4, 15, 12, 10, 24,  25, 0, 0, 0, 40, 18, 50, 200],
-        [0, 2, 0, 4, 5, 6,  20, 20, 25, 30, 40, 18, 50, 100]
+        [0, 2, 0, 4, 5, 6,  20, 20, 25, 30, 40, 18, 50, 100],
+        [5, 10, 9, 20, 25, 30,  0, 0, 0, 0, 0, 0, 0, 0]
     ], dtype=np.float32)
 
     is_box_checked = np.array([
@@ -173,24 +179,29 @@ def test_determine_intermediate_reward():
         [1, 1, 1, 1, 1, 1,  1, 1, 1, 1, 0, 1, 1],
         [1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 1, 1],
         [1, 1, 1, 1, 1, 1,  1, 1, 0, 0, 1, 1, 1],
-        [1, 1, 0, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1]
+        [1, 1, 0, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 0, 0]
     ], dtype=np.int32)
+
+    reward = np.array([10, 19, 18, 0, 10, 140, 100, 44], dtype=np.float32)
 
     assert (collect_sample.value_box == value_box).all(
     ), "The array value_box has not the correct value"
     assert (collect_sample.is_box_checked == is_box_checked).all(
     ), "The array is_box_checked has not the correct value"
+    assert (collect_sample.reward == reward).all(
+    ), "The array reward has not the correct value"
 
 
 def test_determine_final_reward():
     unit_dice_1 = Unit(64, 32, 32, 32)
     unit_dice_2 = Unit(64, 32, 32, 32)
-    unit_box = Unit(64, 32, 32, 32)
+    unit_box = Unit(64, 32, 32, 13)
     model_dice_1 = DiceReRoll(unit_dice_1)
     model_dice_2 = DiceReRoll(unit_dice_2)
     model_box = BoxChoice(unit_box)
     collect_sample = CollectSampleExperiments(
-        2, 5, 6, 13, 50., 200., model_dice_1, model_dice_2, model_box)
+        2, 5, 6, 13, 50., 200., 0.99, model_dice_1, model_dice_2, model_box)
 
     collect_sample.value_box = np.array([
         [3, 8, 12, 12, 20, 18,  21, 0, 25, 0, 0, 18, 0, 0],
