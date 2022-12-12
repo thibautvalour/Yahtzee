@@ -74,22 +74,14 @@ class Train():
 
     def save_current_network(self):
         self.collect_sample.model_dice_1.save_weights(
-            f"{self.save_weights_path}/model_dice_1")
+            f"{self.save_weights_path}/model_dice_1.h5")
         self.collect_sample.model_dice_2.save_weights(
-            f"{self.save_weights_path}/model_dice_2")
+            f"{self.save_weights_path}/model_dice_2.h5")
         self.collect_sample.model_box.save_weights(
-            f"{self.save_weights_path}/model_box")
+            f"{self.save_weights_path}/model_box.h5")
 
     def train(self):
         self.initialize()
-
-        if self.use_old_weights:
-            self.collect_sample.model_dice_1.load_weights(
-                f"{self.old_weights_path}/model_dice_1")
-            self.collect_sample.model_dice_2.load_weights(
-                f"{self.old_weights_path}/model_dice_2")
-            self.collect_sample.model_box.load_weights(
-                f"{self.old_weights_path}/model_box")
 
         self.collect_sample.model_dice_1([tensorflow.random.normal(
             (1, 63), 0, 1), tensorflow.ones((1, self.output_policy_dice))])
@@ -104,6 +96,14 @@ class Train():
             (1, 63), 0, 1), tensorflow.ones((1, self.output_policy_dice))])
         self.best_model_box([tensorflow.random.normal(
             (1, 76), 0, 1), tensorflow.ones((1, self.output_policy_box))])
+
+        if self.use_old_weights:
+            self.collect_sample.model_dice_1.load_weights(
+                f"{self.old_weights_path}/model_dice_1.h5")
+            self.collect_sample.model_dice_2.load_weights(
+                f"{self.old_weights_path}/model_dice_2.h5")
+            self.collect_sample.model_box.load_weights(
+                f"{self.old_weights_path}/model_box.h5")
 
         self.update_network(from_best_to_current=False)
 
