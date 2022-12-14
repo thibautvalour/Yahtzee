@@ -1,7 +1,9 @@
 import random
+import re
+
 
 class Die():
-    def __init__(self, sides: int=6):
+    def __init__(self, sides: int = 6):
         self.sides = sides
         # Make __face private to prevent cheating
         self.__face = None
@@ -19,12 +21,12 @@ class Die():
         if self.__face:
             return "Value: " + str(self.__face)
         else:
-            return "Die has not been thrown"
+            return "Dice has not been thrown"
 
 
 class Hand():
 
-    def __init__(self, dice: int=5, sides: int=6):
+    def __init__(self, dice: int = 5, sides: int = 6):
         self.dice = dice
         self.sides = sides
         self.hand = []
@@ -52,9 +54,11 @@ class Hand():
                 else:
                     # Perform some clean-up of input
                     reroll = reroll.replace(" ", "")  # Remove spaces
-                    reroll = re.sub('[^0-9,]', '', reroll)  # Remove non-numerals
+                    # Remove non-numerals
+                    reroll = re.sub('[^0-9,]', '', reroll)
                     reroll = reroll.split(",")  # Turn string into list
-                    reroll = list(map(int, reroll))  # Turn strings in list to int
+                    # Turn strings in list to int
+                    reroll = list(map(int, reroll))
             except ValueError:
                 print("You entered something other than a number.")
                 print("Please try again")
@@ -80,4 +84,4 @@ class Hand():
 
     def show_hand(self):
         for idx, val in enumerate(self.hand):
-            print("die " + str(idx + 1) + " has value " + str(val.get_face()))
+            print("dice " + str(idx + 1) + " has value " + str(val.get_face()))

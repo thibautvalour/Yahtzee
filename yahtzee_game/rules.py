@@ -81,8 +81,8 @@ class Rules():
             if len(hand) >= 4:
                 for idx, val in enumerate(hand):
                     if hand[idx+1] == val+1 and \
-                        hand[idx+2] == val+2 and \
-                        hand[idx+3] == val+3:
+                            hand[idx+2] == val+2 and \
+                            hand[idx+3] == val+3:
                         return 30
         except IndexError:
             pass
@@ -94,9 +94,9 @@ class Rules():
             if len(hand) >= 5:
                 for idx, val in enumerate(hand):
                     if hand[idx+1] == val+1 and \
-                        hand[idx+2] == val+2 and \
-                        hand[idx+3] == val+3 and \
-                        hand[idx+4] == val+4:
+                            hand[idx+2] == val+2 and \
+                            hand[idx+3] == val+3 and \
+                            hand[idx+4] == val+4:
                         return 40
         except IndexError:
             pass
@@ -109,4 +109,3 @@ class Rules():
 
     def chance(self, hand):
         return sum(hand.get_hand())
-

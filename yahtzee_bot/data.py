@@ -1,7 +1,9 @@
 from copy import copy
 import numpy as np
+import tensorflow
 
-from hash import Hash
+from yahtzee_bot.hash import Hash
+from yahtzee_bot.network import RLModel
 
 
 class CollectSampleExperiments():
@@ -363,7 +365,7 @@ class CollectSampleExperiments():
                                     self.normalization_boxes_reward, self.n_identical_dice_one_hot], axis=1)
 
             available_combinaisons = self.hash.hash_function(
-                self.n_identical_dice)  # à modifier
+                self.n_identical_dice)
 
             outputs = self.model_dice_1(
                 [states, available_combinaisons])[0].numpy()
@@ -469,3 +471,151 @@ class CollectSampleExperiments():
                                              j-1][2] = copy(sparse_reward_dice_2)
                 self.history_model_box[i][self.n_boxes -
                                           j-1][2] = copy(sparse_reward_box)
+
+    # Inference mode
+
+    def initialize_inference(self, path):
+
+        class Unit():
+            def __init__(unit, hidden, hidden_value, hidden_policy, output_policy_dice, output_policy_box):
+                unit.hidden = hidden
+                unit.hidden_value = hidden_value
+                unit.hidden_policy = hidden_policy
+                unit.output_policy_dice = output_policy_dice
+                unit.output_policy_box = output_policy_box
+
+        unit = Unit(1024, 512, 512, 462, 13)
+
+        # model dice 1
+        self.model_dice_1 = RLModel(unit, mode="dice")
+        self.model_dice_1([tensorflow.random.normal(
+            (1, 63), 0, 1), tensorflow.ones((1, 462))])
+        self.model_dice_1.load_weights(f"{path}/model_dice_1.h5")
+
+        # model dice 2
+        self.model_dice_2 = RLModel(unit, mode="dice")
+        self.model_dice_2([tensorflow.random.normal(
+            (1, 63), 0, 1), tensorflow.ones((1, 462))])
+        self.model_dice_2.load_weights(f"{path}/model_dice_2.h5")
+
+        # model box
+        self.model_box = RLModel(unit, mode="box")
+        self.model_box([tensorflow.random.normal(
+            (1, 76), 0, 1), tensorflow.ones((1, 13))])
+        self.model_box.load_weights(f"{path}/model_box.h5")
+
+        self.initialize()
+
+    def show_dice(self, step):
+        """
+        Display the dice values for the bot
+        """
+        if step == 1:
+            roll_dice = np.random.randint(
+                0, self.dice_max_value, (self.n_games, self.n_dice))
+            self.update_dice(roll_dice)
+            self.update_one_hot_dice()
+
+        elif step == 2 or step == 3:
+            pass
+
+        else:
+            raise Exception(f"Step {step} is not an acceptable value")
+
+        print("\nRolling dice...")
+        for i in range(self.n_dice):
+            print(
+                f"dice {i+1} has value {1+self.dice[0, i*self.dice_max_value:(i+1)*self.dice_max_value].argmax()}")
+
+    def displays_dice_rerolled(self):
+
+        states = np.concatenate([self.is_box_checked, self.value_box /
+                                self.normalization_boxes_reward, self.n_identical_dice_one_hot], axis=1)
+        available_combinaisons = self.hash.hash_function(self.n_identical_dice)
+
+        outputs = self.model_dice_1([states, available_combinaisons])
+
+        # print(f"The bot predicts that it will get a discounted final score of {(outputs[1].numpy()[0, 0]).astype(np.int32)}")
+
+        outputs_reweighted = outputs[0].numpy(
+        )/outputs[0].numpy().sum(axis=1, keepdims=True)
+
+        n_dice_to_reroll = self.hash.reverse_hash_function(
+            outputs_reweighted[0].argmax())
+
+        dice_to_reroll = []
+
+        for i in range(self.n_dice):
+            x = np.argmax(
+                self.dice[0, self.dice_max_value*i:self.dice_max_value*(i+1)])
+            if n_dice_to_reroll[x] > 0:
+                n_dice_to_reroll[x] -= 1
+                dice_to_reroll.append(i)
+
+        if (n_dice_to_reroll != 0).any():
+            raise Exception("Combination of dice played not accepted")
+
+        dice_to_reroll = np.array(dice_to_reroll)
+
+        if dice_to_reroll.size == 0:
+            print("The bot does not roll any dice")
+        elif dice_to_reroll.size < self.n_dice:
+            dice_string = ", ".join([str(dice+1) for dice in dice_to_reroll])
+            print(f"The bot throws the dice {dice_string}")
+        elif dice_to_reroll.size == self.n_dice:
+            print("The bot re-rolls all the dice")
+        else:
+            raise Exception(
+                f"The array dice_to_reroll : {dice_to_reroll} does not have a correct size")
+
+        for i in dice_to_reroll:
+            self.dice[0, self.dice_max_value*i:self.dice_max_value*(i+1)] = 0
+            self.dice[0, self.dice_max_value*i+np.random.randint(0, 6)] = 1
+
+        self.update_one_hot_dice()
+
+    def show_scoreboard_points(self, round):
+
+        self.available_moves()
+
+        states = [np.concatenate([self.is_box_checked, self.value_box/self.normalization_boxes_reward,
+                                  self.n_identical_dice_one_hot, self.available_boxes], axis=1), self.available_boxes.astype(np.float32)]
+
+        outputs = self.model_box(states)
+
+        # print(f"The bot predicts that it will get a discounted final score of {(outputs[1].numpy()[0, 0]).astype(np.int32)}")
+
+        outputs_reweighted = outputs[0].numpy(
+        )/outputs[0].numpy().sum(axis=1, keepdims=True)
+
+        self.decision = np.zeros(self.n_games, dtype=np.int32)
+
+        self.decision[0] = outputs_reweighted[0].argmax().astype(np.int32)
+
+        self.reward = np.zeros(self.n_games, dtype=np.float32)
+        self.determine_intermediate_reward(round)
+
+        all_decisions = np.array(["Aces", "Twos", "Threes", "Fours", "Fives", "Sixes",
+                                 "Three of a kind", "Four of a kind", "Full House", "Small Straight", "Large Straight", "Chance", "Yahtzee"])
+
+        print(f"The bot decided to play the {all_decisions[self.decision[0]]}")
+
+        print("\nSCOREBOARD")
+        print("==================================")
+        for i in range(self.n_boxes-2):
+            if self.is_box_checked[0, i] == 1:
+                print(
+                    f"{i+1} {all_decisions[i]}| {(self.value_box[0, i]*self.is_box_checked[0, i]).astype(np.int32)} points")
+            else:
+                print(f"{i+1} {all_decisions[i]}|")
+        if self.is_box_checked[0, 12] == 1:
+            print(
+                f"12 {all_decisions[12]}| {(self.value_box[0, 12]*self.is_box_checked[0, 12]+self.value_box[0, 12]).astype(np.int32)} points")
+        else:
+            print(f"12 {all_decisions[12]}|")
+        if self.is_box_checked[0, 11] == 1:
+            print(
+                f"12 {all_decisions[11]}| {(self.value_box[0, 11]*self.is_box_checked[0, 11]).astype(np.int32)} points")
+        else:
+            print(f"11 {all_decisions[12]}|")
+        print("==================================")

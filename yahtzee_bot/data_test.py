@@ -1,7 +1,7 @@
 import numpy as np
 
-# from data import CollectSampleExperiments
-# from network import Unit, DiceReRoll, BoxChoice
+from data import CollectSampleExperiments
+from network import Unit, DiceReRoll, BoxChoice
 
 
 def test_initialize():

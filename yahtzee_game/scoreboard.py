@@ -1,7 +1,8 @@
 import re
 
-from hand import Hand
-from rules import Rules
+from yahtzee_game.hand import Hand
+from yahtzee_game.rules import Rules
+
 
 class ScoreBoard():
 
@@ -33,7 +34,8 @@ class ScoreBoard():
                 print("ScoreBoard already saved!")
                 return False
             else:
-                print(f"Adding {value} points to {self.scoreboard_rows[int(row)]}")
+                print(
+                    f"Adding {value} points to {self.scoreboard_rows[int(row)]}")
                 self.__scoreboard_points[row] = value
                 return True
 
@@ -56,7 +58,7 @@ class ScoreBoard():
 
     def select_scoring(self, hand):
         msg = "Choose which scoring to use "\
-               "(leave empty to show available rows): "
+            "(leave empty to show available rows): "
         scoreboard_row = False
         score_saved = False
         while not scoreboard_row and not score_saved:

@@ -27,7 +27,7 @@ To exit, press [Ctrl+C]""")
         hand_1.re_roll()
         scoreboard_player_1.select_scoring(hand_1)
         scoreboard_player_1.show_scoreboard_points()
-        
+
         print("player 2 to play")
         hand_2.throw()
         hand_2.show_hand()
@@ -38,7 +38,6 @@ To exit, press [Ctrl+C]""")
         input("\nPress any key to continue")
         os.system('cls' if os.name == 'nt' else 'clear')
 
-
     score_player_1 = sum(scoreboard_player_1.get_scoreboard_points().values())
     score_player_2 = sum(scoreboard_player_2.get_scoreboard_points().values())
     if score_player_1 == score_player_2:
@@ -47,7 +46,9 @@ To exit, press [Ctrl+C]""")
         worst_score, best_score = sorted([score_player_1, score_player_2])
         winner = [score_player_1, score_player_2].index(best_score) + 1
         print(f"\nCongratulations to player {winner}!")
-        print(f"You finished the game with {best_score} points while player 2 has {worst_score} points\n")
+        print(
+            f"You finished the game with {best_score} points while player 2 has {worst_score} points\n")
+
 
 if __name__ == '__main__':
     try:
