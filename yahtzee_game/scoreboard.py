@@ -1,7 +1,7 @@
 import re
 
-from yahtzee_game.hand import Hand
-from yahtzee_game.rules import Rules
+from hand import Hand
+from rules import Rules
 
 
 class ScoreBoard():
