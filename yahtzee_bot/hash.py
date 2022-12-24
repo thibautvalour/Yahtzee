@@ -2,11 +2,22 @@ import numpy as np
 
 
 class Hash():
-    def __init__(self, dice_max_value):
+    """
+    Explanation: the neural network will choose which combination of dice to delete.
+    The problem is that this represents 6**6 = 46 656 combinations, and that is too big for a neural network.
+    The advantage is that only some of these combinations are used.
+    For example, the bot can never decide to roll the combination [2, 3, 4, 2, 0, 3].
+    The condition is obviously that the sum of the terms is lower than the number of dice, i.e. 5. 462 combinations are then left.
+    The problem is that there is no trivial bijection between [0, 461] and {x in [0, 5]^6 | x.sum()<=5}.
+    The Hash class below allows us to create a bijection between these two sets in a rather optimized way, and also the reciprocal bijection.
+    The hash_function method allows to pass to transform the element from [0, 5]^6 into [0, 461].
+    The reverse_hash_function method allows to transform the element of [0, 461] into [0, 5]^6.
+    """
+
+    def __init__(self, dice_max_value: int = 6) -> None:
         self.dice_max_value = dice_max_value
 
     def initialize(self):
-
         # The value i is 1 if the combination created by i is deleteable
         self.is_combinaison_removable = np.zeros(
             self.dice_max_value**self.dice_max_value, dtype=np.uint8)

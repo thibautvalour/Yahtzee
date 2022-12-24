@@ -16,6 +16,12 @@ class CollectSampleExperiments():
     ----------
     n_games : int
         Number of games played in parallel
+    model_dice_1 : keras model
+        Neural network that generates the best combination of dice to keep in the first round
+    model_dice_2 : keras model
+        Neural network that generates the best combination of dice to keep in the second round
+    model_box : keras model
+        Neural network that generates the best choice of checkbox
     n_dice : int
         Number of dice involved
     dice_max_value : int
@@ -26,12 +32,6 @@ class CollectSampleExperiments():
         Normalization constant for the boxes that helps the neural network by having almost only values between 0 and 1
     gamma : float
         Constant that determines the reward discount
-    model_dice_1 : keras model
-        Neural network that generates the best combination of dice to keep in the first round
-    model_dice_2 : keras model
-        Neural network that generates the best combination of dice to keep in the second round
-    model_box : keras model
-        Neural network that generates the best choice of checkbox
 
     Returns
     ----------
@@ -43,7 +43,7 @@ class CollectSampleExperiments():
         Sample states played by the model box
     """
 
-    def __init__(self, n_games, n_dice, dice_max_value, n_boxes, normalization_boxes_reward, gamma, model_dice_1, model_dice_2, model_box):
+    def __init__(self, n_games : int, model_dice_1, model_dice_2, model_box, n_dice : int = 5, dice_max_value : int = 6, n_boxes : int = 13, normalization_boxes_reward : float = 50., gamma : float = 0.9) -> None:
         self.n_games = n_games
         self.n_dice = n_dice
         self.dice_max_value = dice_max_value

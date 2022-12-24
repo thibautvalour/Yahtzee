@@ -46,8 +46,8 @@ class Train():
         model_dice_2 = RLModel(self, mode="dice")
         model_box = RLModel(self, mode="box")
 
-        self.collect_sample = CollectSampleExperiments(self.n_games, self.n_dice, self.max_value_dice,
-                                                       self.n_boxes, self.normalization_boxes_reward, self.gamma, model_dice_1, model_dice_2, model_box)
+        self.collect_sample = CollectSampleExperiments(self.n_games, model_dice_1, model_dice_2, model_box, self.n_dice, self.max_value_dice,
+                                                       self.n_boxes, self.normalization_boxes_reward, self.gamma)
 
     def update_network(self, from_best_to_current=True):
         if from_best_to_current:
@@ -117,8 +117,9 @@ class Train():
                 print("Take older version")
                 self.update_network(from_best_to_current=True)
                 n_ite_not_improve = 0
-
+            
             self.collect_sample.generate_sample()
+
             print(
                 f"Reward statistics{self.collect_sample.average_reward_statistic()} at iteration {ite}")
 

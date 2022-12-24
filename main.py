@@ -20,7 +20,7 @@ To exit, press [Ctrl+C]""")
     hand = Hand(5, 6)
     scoreboard_player = ScoreBoard()
 
-    bot = CollectSampleExperiments(1, 5, 6, 13, 50., 0.9, None, None, None)
+    bot = CollectSampleExperiments(1, None, None, None, 5, 6, 13, 50., 0.9)
     bot.initialize_inference(path="./yahtzee_bot/weights")
 
     # We play the 13 rounds to fill the grid
