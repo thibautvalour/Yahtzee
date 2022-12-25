@@ -9,7 +9,7 @@ from PIL import Image
 
 from compute_turn_score import score
 
-pil_images = [Image.open(f"images/dice_{idx}.png") for idx in range(1,7)]
+pil_images = [Image.open(f"yahtzee_dash_app/images/dice_{idx}.png") for idx in range(1,7)]
 
 app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
 
