@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from yahtzee_bot.training import Train
+from training import Train
 
 if __name__ == "__main__":
     # create the parser

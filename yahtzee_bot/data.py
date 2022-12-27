@@ -43,7 +43,7 @@ class CollectSampleExperiments():
         Sample states played by the model box
     """
 
-    def __init__(self, n_games : int, model_dice_1, model_dice_2, model_box, n_dice : int = 5, dice_max_value : int = 6, n_boxes : int = 13, normalization_boxes_reward : float = 50., gamma : float = 0.9) -> None:
+    def __init__(self, n_games: int, model_dice_1, model_dice_2, model_box, n_dice: int = 5, dice_max_value: int = 6, n_boxes: int = 13, normalization_boxes_reward: float = 50., gamma: float = 0.9) -> None:
         self.n_games = n_games
         self.n_dice = n_dice
         self.dice_max_value = dice_max_value
@@ -520,26 +520,31 @@ class CollectSampleExperiments():
             pass
 
         else:
-            raise Exception(f"Step {step} is not an acceptable value")
+            raise Exception(f"Step {step} is not an acceptable value (should be between 1 and 3)")
 
-        print("\nRolling dice...")
-        for i in range(self.n_dice):
-            print(
-                f"dice {i+1} has value {1+self.dice[0, i*self.dice_max_value:(i+1)*self.dice_max_value].argmax()}")
+        # print("\nRolling dice...")
+        # for i in range(self.n_dice):
+            # print(
+            #     f"dice {i+1} has value {1+self.dice[0, i*self.dice_max_value:(i+1)*self.dice_max_value].argmax()}")
 
-    def displays_dice_rerolled(self):
+    def displays_dice_rerolled(self, step, silence=False):
 
         states = np.concatenate([self.is_box_checked, self.value_box /
                                 self.normalization_boxes_reward, self.n_identical_dice_one_hot], axis=1)
         available_combinaisons = self.hash.hash_function(self.n_identical_dice)
 
-        outputs = self.model_dice_1([states, available_combinaisons])
-
+        if step == 1:
+            outputs = self.model_dice_1([states, available_combinaisons])
+        elif step == 2:
+            outputs = self.model_dice_2([states, available_combinaisons])
+        else:
+            raise Exception(f"Step {step} is not an acceptable value (should be between 1 and 2)")
+            
         # print(f"The bot predicts that it will get a discounted final score of {(outputs[1].numpy()[0, 0]).astype(np.int32)}")
 
         outputs_reweighted = outputs[0].numpy(
         )/outputs[0].numpy().sum(axis=1, keepdims=True)
-
+        
         n_dice_to_reroll = self.hash.reverse_hash_function(
             outputs_reweighted[0].argmax())
 
@@ -557,16 +562,17 @@ class CollectSampleExperiments():
 
         dice_to_reroll = np.array(dice_to_reroll)
 
-        if dice_to_reroll.size == 0:
-            print("The bot does not roll any dice")
-        elif dice_to_reroll.size < self.n_dice:
-            dice_string = ", ".join([str(dice+1) for dice in dice_to_reroll])
-            print(f"The bot throws the dice {dice_string}")
-        elif dice_to_reroll.size == self.n_dice:
-            print("The bot re-rolls all the dice")
-        else:
-            raise Exception(
-                f"The array dice_to_reroll : {dice_to_reroll} does not have a correct size")
+        if not silence:
+            if dice_to_reroll.size == 0:
+                print("The bot does not roll any dice")
+            elif dice_to_reroll.size < self.n_dice:
+                dice_string = ", ".join([str(dice+1) for dice in dice_to_reroll])
+                print(f"The bot throws the dice {dice_string}")
+            elif dice_to_reroll.size == self.n_dice:
+                print("The bot re-rolls all the dice")
+            else:
+                raise Exception(
+                    f"The array dice_to_reroll : {dice_to_reroll} does not have a correct size")
 
         for i in dice_to_reroll:
             self.dice[0, self.dice_max_value*i:self.dice_max_value*(i+1)] = 0
@@ -574,13 +580,14 @@ class CollectSampleExperiments():
 
         self.update_one_hot_dice()
 
-    def show_scoreboard_points(self, round):
+        return dice_to_reroll
+
+    def show_scoreboard_points(self, round, silence):
 
         self.available_moves()
 
         states = [np.concatenate([self.is_box_checked, self.value_box/self.normalization_boxes_reward,
                                   self.n_identical_dice_one_hot, self.available_boxes], axis=1), self.available_boxes.astype(np.float32)]
-
         outputs = self.model_box(states)
 
         # print(f"The bot predicts that it will get a discounted final score of {(outputs[1].numpy()[0, 0]).astype(np.int32)}")
@@ -598,24 +605,45 @@ class CollectSampleExperiments():
         all_decisions = np.array(["Aces", "Twos", "Threes", "Fours", "Fives", "Sixes",
                                  "Three of a kind", "Four of a kind", "Full House", "Small Straight", "Large Straight", "Chance", "Yahtzee"])
 
-        print(f"The bot decided to play the {all_decisions[self.decision[0]]}")
+        if not silence:
+            print(f"The bot decided to play the {all_decisions[self.decision[0]]}")
 
-        print("\nSCOREBOARD")
-        print("==================================")
-        for i in range(self.n_boxes-2):
-            if self.is_box_checked[0, i] == 1:
+            print("\nSCOREBOARD")
+            print("==================================")
+            for i in range(self.n_boxes-2):
+                if self.is_box_checked[0, i] == 1:
+                    print(
+                        f"{i+1} {all_decisions[i]}| {(self.value_box[0, i]*self.is_box_checked[0, i]).astype(np.int32)} points")
+                else:
+                    print(f"{i+1} {all_decisions[i]}|")
+            if self.is_box_checked[0, 12] == 1:
                 print(
-                    f"{i+1} {all_decisions[i]}| {(self.value_box[0, i]*self.is_box_checked[0, i]).astype(np.int32)} points")
+                    f"12 {all_decisions[12]}| {(self.value_box[0, 12]*self.is_box_checked[0, 12]+self.value_box[0, 12]).astype(np.int32)} points")
             else:
-                print(f"{i+1} {all_decisions[i]}|")
-        if self.is_box_checked[0, 12] == 1:
-            print(
-                f"12 {all_decisions[12]}| {(self.value_box[0, 12]*self.is_box_checked[0, 12]+self.value_box[0, 12]).astype(np.int32)} points")
+                print(f"12 {all_decisions[12]}|")
+            if self.is_box_checked[0, 11] == 1:
+                print(
+                    f"12 {all_decisions[11]}| {(self.value_box[0, 11]*self.is_box_checked[0, 11]).astype(np.int32)} points")
+            else:
+                print(f"11 {all_decisions[12]}|")
+            print("==================================")
+
+    def determine_move(self, dice_state, remaining_rules, history_rules, turn, silence=True):
+        self.dice = np.zeros((1, self.dice_max_value*self.n_dice))
+        for i in range(self.n_dice):
+            self.dice[0, int(dice_state[i]+self.dice_max_value*i)] = 1
+        self.update_one_hot_dice()
+        self.is_box_checked[0] = remaining_rules
+        self.value_box[0] = history_rules
+
+        if turn == 1:
+            dice_to_reroll = self.displays_dice_rerolled(1, silence)
+            return dice_to_reroll
+        elif turn == 2:
+            dice_to_reroll = self.displays_dice_rerolled(2, silence)
+            return dice_to_reroll
+        elif turn == 3:
+            self.show_scoreboard_points(self.n_boxes, silence)
+            return self.decision[0]
         else:
-            print(f"12 {all_decisions[12]}|")
-        if self.is_box_checked[0, 11] == 1:
-            print(
-                f"12 {all_decisions[11]}| {(self.value_box[0, 11]*self.is_box_checked[0, 11]).astype(np.int32)} points")
-        else:
-            print(f"11 {all_decisions[12]}|")
-        print("==================================")
+            raise Exception(f"Turn {turn} is not an acceptable value (should be between 1 and 3)")

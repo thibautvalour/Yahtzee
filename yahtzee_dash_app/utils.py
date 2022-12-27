@@ -1,16 +1,19 @@
-import numpy.random as random
+import numpy as np
 
-def bot_decision(dices, choices_bot, turn):
-    if turn in [1,2]:
-        # we have to return a list of True and False depending of which dices the bot decides to keep
-        keepList = [True if dice>3 else False for dice in dices]
+
+def bot_decision(dices, choices_bot, turn, model):
+    choices = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','yahtzee','chance']
+    dice_state = np.array([x-1 for x in dices], dtype=np.float32)
+    remaining_rules = np.array([not(c in choices_bot) for c in choices], dtype=np.float32)
+    remaining_rules[-1], remaining_rules[-2] = remaining_rules[-2], remaining_rules[-1]
+    history_rules = np.zeros(14, dtype=np.float32)
+    move = model.determine_move(dice_state, remaining_rules, history_rules, turn)
+    if turn in [1, 2]:
+        keepList = [not(i in move) for i in range(5)]
         return keepList
-    else: 
-        #turn = 3, we have to return a choice of rule
-        random_idx = random.randint(0, len(choices_bot))
-        choice = choices_bot[random_idx]
-        return choice
-
+    else:
+        choices = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','chance','yahtzee']
+        return choices[move]
 
 def score(rule_str, game_state):
     if rule_str=='aces':

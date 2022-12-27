@@ -6,8 +6,13 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import numpy.random as random
 from PIL import Image
+from yahtzee_bot.data import CollectSampleExperiments
 
-from utils import score, bot_decision
+from yahtzee_dash_app.utils import score, bot_decision
+
+
+model = CollectSampleExperiments(1, None, None, None)
+model.initialize_inference("./yahtzee_bot/weights")
 
 pil_images = [Image.open(f"yahtzee_dash_app/images/dice_{idx}.png") for idx in range(1,13)]
 bot_image = Image.open(f"yahtzee_dash_app/images/robot_dice.jpg")
@@ -25,7 +30,6 @@ choices_bot = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind',
 @app.callback(Output('header', 'children'),
               [Input('dummy', 'value')]) #dummy input
 def update_output(input_value):
-    # print('LAUNCHED THE APP')
     return html.Div([
         html.Div([html.Button('Roll Dices', id='button', style={"align": "center"})], style={"text-align": "center"}),
         html.Div(id='rolls_left', style={"text-align": "center"})
@@ -82,8 +86,6 @@ app.layout = html.Div([
             dcc.Checklist(id='available_choices', options=choices, style={'display': 'none'}),
         ]),
     ]),
-
-    # html.Br(),
     
     html.Div([
         html.Div([
@@ -137,14 +139,14 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
         turn = 1
         dices = [random.randint(1, 7) for _ in range(5)]
         mem_dices.append(dices)
-        keep_list = bot_decision(dices, choices_bot, turn)
+        keep_list = bot_decision(dices, choices_bot, turn, model)
         mem_held.append(keep_list)
 
         #second roll 
         turn = 2
         dices = [random.randint(1, 7) if not keep_list[idx] else dices[idx] for idx in range(5)]
         mem_dices.append(dices)
-        keep_list = bot_decision(dices, choices_bot, turn)
+        keep_list = bot_decision(dices, choices_bot, turn, model)
         mem_held.append(keep_list)
         mem_held.append([True]*5)
 
@@ -152,7 +154,7 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
         turn = 3
         dices = [random.randint(1, 7) if not keep_list[idx] else dices[idx] for idx in range(5)]
         mem_dices.append(dices)
-        rule = bot_decision(dices, choices_bot, turn)
+        rule = bot_decision(dices, choices_bot, turn, model)
 
         choices_bot = [e for e in choices_bot if not e == rule]
 
@@ -236,15 +238,16 @@ def update_rolls_left(n_clicks, avachoices):
 )
 def update_dices(n_clicks, keep1, keep2, keep3, keep4, keep5, choice):
     # roll dices that are not kept
-    if keep1 is None:
+    print('update_dices keep1', keep1)
+    if keep1 is None or keep1==[]:
         game_state[0] = random.randint(1, 7)
-    if keep2 is None:
+    if keep2 is None or keep2==[]:
         game_state[1] = random.randint(1, 7)
-    if keep3 is None:
+    if keep3 is None or keep3==[]:
         game_state[2] = random.randint(1, 7)
-    if keep4 is None:
+    if keep4 is None or keep4==[]:
         game_state[3] = random.randint(1, 7)
-    if keep5 is None:
+    if keep5 is None or keep5==[]:
         game_state[4] = random.randint(1, 7)
     print('game state', game_state, score('aces', game_state))
 
