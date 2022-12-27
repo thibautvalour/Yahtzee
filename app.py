@@ -6,8 +6,13 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import numpy.random as random
 from PIL import Image
+from yahtzee_bot.data import CollectSampleExperiments
 
-from utils import score, bot_decision
+from yahtzee_dash_app.utils import score, bot_decision
+
+
+model = CollectSampleExperiments(1, None, None, None)
+model.initialize_inference("./yahtzee_bot/weights")
 
 pil_images = [Image.open(f"yahtzee_dash_app/images/dice_{idx}.png") for idx in range(1,13)]
 bot_image = Image.open(f"yahtzee_dash_app/images/robot.jpeg")
@@ -137,14 +142,14 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
         turn = 1
         dices = [random.randint(1, 7) for _ in range(5)]
         mem_dices.append(dices)
-        keep_list = bot_decision(dices, choices_bot, turn)
+        keep_list = bot_decision(dices, choices_bot, turn, model)
         mem_held.append(keep_list)
 
         #second roll 
         turn = 2
         dices = [random.randint(1, 7) if not keep_list[idx] else dices[idx] for idx in range(5)]
         mem_dices.append(dices)
-        keep_list = bot_decision(dices, choices_bot, turn)
+        keep_list = bot_decision(dices, choices_bot, turn, model)
         mem_held.append(keep_list)
         mem_held.append([True]*5)
 
@@ -152,7 +157,7 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
         turn = 3
         dices = [random.randint(1, 7) if not keep_list[idx] else dices[idx] for idx in range(5)]
         mem_dices.append(dices)
-        rule = bot_decision(dices, choices_bot, turn)
+        rule = bot_decision(dices, choices_bot, turn, model)
 
         choices_bot = [e for e in choices_bot if not e == rule]
 
