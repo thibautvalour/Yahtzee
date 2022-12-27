@@ -30,7 +30,6 @@ choices_bot = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind',
 @app.callback(Output('header', 'children'),
               [Input('dummy', 'value')]) #dummy input
 def update_output(input_value):
-    # print('LAUNCHED THE APP')
     return html.Div([
         html.Div([html.Button('Roll Dices', id='button', style={"align": "center"})], style={"text-align": "center"}),
         html.Div(id='rolls_left', style={"text-align": "center"})
@@ -87,8 +86,6 @@ app.layout = html.Div([
             dcc.Checklist(id='available_choices', options=choices, style={'display': 'none'}),
         ]),
     ]),
-
-    # html.Br(),
     
     html.Div([
         html.Div([
@@ -241,15 +238,16 @@ def update_rolls_left(n_clicks, avachoices):
 )
 def update_dices(n_clicks, keep1, keep2, keep3, keep4, keep5, choice):
     # roll dices that are not kept
-    if keep1 is None:
+    print('update_dices keep1', keep1)
+    if keep1 is None or keep1==[]:
         game_state[0] = random.randint(1, 7)
-    if keep2 is None:
+    if keep2 is None or keep2==[]:
         game_state[1] = random.randint(1, 7)
-    if keep3 is None:
+    if keep3 is None or keep3==[]:
         game_state[2] = random.randint(1, 7)
-    if keep4 is None:
+    if keep4 is None or keep4==[]:
         game_state[3] = random.randint(1, 7)
-    if keep5 is None:
+    if keep5 is None or keep5==[]:
         game_state[4] = random.randint(1, 7)
     print('game state', game_state, score('aces', game_state))
 
