@@ -1,7 +1,10 @@
-from network import RLModel
 import numpy as np
 import unittest
 import tensorflow as tf
+
+from . import network
+
+RLModel = network.RLModel
 
 
 class Unit():
@@ -15,6 +18,7 @@ class Unit():
 
 class TestRLModel(unittest.TestCase):
     def test_call_1(self):
+        tf.random.set_seed(53)
         test_cases = [
             (Unit(100, 10, 5, 462, 13), "dice", [
              tf.random.normal((2, 45)), tf.ones((2, 462))], (2, 462)),
@@ -27,13 +31,7 @@ class TestRLModel(unittest.TestCase):
             self.assertEqual(result[0].numpy().shape, expected)
 
     def test_call_2(self):
-        class Unit():
-            def __init__(unit, hidden, hidden_value, hidden_policy, output_policy_dice, output_policy_box):
-                unit.hidden = hidden
-                unit.hidden_value = hidden_value
-                unit.hidden_policy = hidden_policy
-                unit.output_policy_dice = output_policy_dice
-                unit.output_policy_box = output_policy_box
+        tf.random.set_seed(53)
         test_cases = [
             (Unit(4, 2, 5, 462, 13), "dice", [
              tf.random.normal((5, 45)), tf.ones((5, 462))], 1.),

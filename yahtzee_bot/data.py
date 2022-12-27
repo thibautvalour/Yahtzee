@@ -2,8 +2,12 @@ from copy import copy
 import numpy as np
 import tensorflow
 
-from yahtzee_bot.hash import Hash
-from yahtzee_bot.network import RLModel
+from . import hash
+from . import network
+
+Hash = hash.Hash
+RLModel = network.RLModel
+
 
 
 class CollectSampleExperiments():
