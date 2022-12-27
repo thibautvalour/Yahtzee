@@ -10,7 +10,7 @@ from PIL import Image
 from utils import score, bot_decision
 
 pil_images = [Image.open(f"yahtzee_dash_app/images/dice_{idx}.png") for idx in range(1,13)]
-bot_image = Image.open(f"yahtzee_dash_app/images/robot.jpeg")
+bot_image = Image.open(f"yahtzee_dash_app/images/robot_dice.jpg")
 
 app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
 
