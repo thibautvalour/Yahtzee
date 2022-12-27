@@ -522,10 +522,10 @@ class CollectSampleExperiments():
         else:
             raise Exception(f"Step {step} is not an acceptable value (should be between 1 and 3)")
 
-        print("\nRolling dice...")
-        for i in range(self.n_dice):
-            print(
-                f"dice {i+1} has value {1+self.dice[0, i*self.dice_max_value:(i+1)*self.dice_max_value].argmax()}")
+        # print("\nRolling dice...")
+        # for i in range(self.n_dice):
+            # print(
+            #     f"dice {i+1} has value {1+self.dice[0, i*self.dice_max_value:(i+1)*self.dice_max_value].argmax()}")
 
     def displays_dice_rerolled(self, step, silence=False):
 
