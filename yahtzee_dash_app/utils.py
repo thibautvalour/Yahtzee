@@ -1,4 +1,3 @@
-import numpy.random as random
 import numpy as np
 
 
@@ -8,16 +7,12 @@ def bot_decision(dices, choices_bot, turn, model):
     remaining_rules = np.array([not(c in choices_bot) for c in choices], dtype=np.float32)
     remaining_rules[-1], remaining_rules[-2] = remaining_rules[-2], remaining_rules[-1]
     history_rules = np.zeros(14, dtype=np.float32)
-    print(f"Disposition : {dice_state=}, {remaining_rules=}, {history_rules=}")
     move = model.determine_move(dice_state, remaining_rules, history_rules, turn)
     if turn in [1, 2]:
         keepList = [not(i in move) for i in range(5)]
-        print(f"LE BOT JOUE !!! {keepList=}")
         return keepList
     else:
-        print(f"{move=}")
         choices = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','chance','yahtzee']
-        print(f"LE BOT JOUE !!! {choices[move]=}")
         return choices[move]
 
 def score(rule_str, game_state):
