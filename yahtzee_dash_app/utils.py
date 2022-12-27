@@ -1,3 +1,17 @@
+import numpy.random as random
+
+def bot_decision(dices, choices_bot, turn):
+    if turn in [1,2]:
+        # we have to return a list of True and False depending of which dices the bot decides to keep
+        keepList = [True if dice>3 else False for dice in dices]
+        return keepList
+    else: 
+        #turn = 3, we have to return a choice of rule
+        random_idx = random.randint(0, len(choices_bot))
+        choice = choices_bot[random_idx]
+        return choice
+
+
 def score(rule_str, game_state):
     if rule_str=='aces':
         return sum([x for x in game_state if x==1])
