@@ -1,9 +1,9 @@
-from yahtzee_bot.ppo_loss import compute_gradients, PPO
 import numpy as np
 import tensorflow as tf
 import unittest
-from yahtzee_bot.network import RLModel
-from yahtzee_bot.network_test import Unit
+from network import RLModel
+from network_test import Unit
+from ppo_loss import compute_gradients, PPO
 
 
 class TestPPOLoss(unittest.TestCase):

@@ -1,13 +1,9 @@
 import numpy as np
 import tensorflow
 
-from . import data
-from . import network
-from . import ppo_loss
-
-CollectSampleExperiments = data.CollectSampleExperiments
-RLModel = network.RLModel
-PPO = ppo_loss.PPO
+from data import CollectSampleExperiments
+from network import RLModel
+from ppo_loss import PPO
 
 
 class Train():

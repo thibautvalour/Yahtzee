@@ -2,9 +2,7 @@ import numpy as np
 import unittest
 import tensorflow as tf
 
-from . import network
-
-RLModel = network.RLModel
+from network import RLModel
 
 
 class Unit():

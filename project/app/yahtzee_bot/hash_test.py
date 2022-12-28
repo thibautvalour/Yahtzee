@@ -1,9 +1,7 @@
 import numpy as np
 import unittest
 
-from . import hash
-
-Hash = hash.Hash
+from hash import Hash
 
 
 class TestHash(unittest.TestCase):

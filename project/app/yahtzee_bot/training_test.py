@@ -2,13 +2,9 @@ import numpy as np
 import tensorflow as tf
 import unittest
 
-from . import training
-from . import network
-from . import data
-
-Train = training.Train
-RLModel = network.RLModel
-CollectSampleExperiments = data.CollectSampleExperiments
+from training import Train
+from network import RLModel
+from data import CollectSampleExperiments
 
 
 class Args():

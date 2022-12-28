@@ -1,15 +1,10 @@
 import numpy as np
 import unittest
 
-from . import data
-from . import network
-from . import network_test
-from . import hash
-
-CollectSampleExperiments = data.CollectSampleExperiments
-RLModel = network.RLModel
-Unit = network_test.Unit
-Hash = hash.Hash
+from data import CollectSampleExperiments
+from network import RLModel
+from network_test import Unit
+from hash import Hash
 
 
 class TestData(unittest.TestCase):

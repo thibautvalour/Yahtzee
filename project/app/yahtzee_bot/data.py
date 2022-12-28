@@ -2,12 +2,14 @@ from copy import copy
 import numpy as np
 import tensorflow
 
-from . import hash
-from . import network
-
-Hash = hash.Hash
-RLModel = network.RLModel
-
+try:
+    from hash import Hash
+    from network import RLModel
+except ModuleNotFoundError:
+    from . import hash
+    from . import network
+    Hash = hash.Hash
+    RLModel = network.RLModel
 
 
 class CollectSampleExperiments():
