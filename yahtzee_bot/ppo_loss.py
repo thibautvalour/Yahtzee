@@ -40,7 +40,6 @@ def compute_gradients(optimizer, model, states, available_actions, actions, fixe
         value_loss = tf.square(expected_values-values)
         total_loss = -tf.reduce_mean(clip_loss-a1*value_loss+a2*entropy_loss)
 
-        # print(clip_loss[0][0].numpy(), -value_loss[0][0].numpy()*a1, entropy_loss[0][0].numpy()*a2)
 
     grads = tape.gradient(total_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))

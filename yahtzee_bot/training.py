@@ -1,9 +1,13 @@
 import numpy as np
 import tensorflow
 
-from yahtzee_bot.data import CollectSampleExperiments
-from yahtzee_bot.network import RLModel
-from yahtzee_bot.ppo_loss import PPO
+from . import data
+from . import network
+from . import ppo_loss
+
+CollectSampleExperiments = data.CollectSampleExperiments
+RLModel = network.RLModel
+PPO = ppo_loss.PPO
 
 
 class Train():
