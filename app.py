@@ -1,15 +1,19 @@
 from dash.dependencies import Input, Output, State
 import dash
-from dash import html
-from dash import dcc
+from dash import html, dash_table, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import numpy.random as random
 from PIL import Image
 from yahtzee_bot.data import CollectSampleExperiments
+import pandas as pd
 
 from yahtzee_dash_app.utils import score, bot_decision
 
+rules_index = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','yahtzee','chance']
+df=pd.DataFrame.from_dict(
+    {'Rules done':rules_index,
+     'Player_':['']*13, 'Machine':['']*13})
 
 model = CollectSampleExperiments(1, None, None, None)
 model.initialize_inference("./yahtzee_bot/weights")
@@ -41,6 +45,25 @@ display = html.Div(id='display')
 app.layout = html.Div([
     html.Div([
         html.Div([
+                html.H6('SCOREBOARD'),
+                html.Div([
+                    html.Div('Total player score :', style={'display':'inline-block'}),
+                    html.Div(id='total_score', style={'display':'inline-block'}),
+                    html.Div(0, id='score_total', style={"text-align":'center', 'display':'inline-block', 'margin-left':10}),
+                ]),
+                html.Div([
+                    html.Div('Total bot score :', style={'display':'inline-block'}),
+                    html.Div(id='total_score_bot', style={'display':'inline-block'}),
+                    html.Div(0, id='score_total_bot', style={"text-align":'center', 'display':'inline-block', 'margin-left':10}),
+                ])
+            ]),
+        html.Div(
+            dash_table.DataTable(columns=[{"name": i, "id": i} for i in df.columns],
+                data=df.to_dict("rows"),style_data={'textAlign': 'center'}, style_header={'textAlign': 'center'}),
+            id='dynamic_scoreboard'),
+    ], style={"text-align":'center', 'position': 'absolute', 'top': '45%', 'left': '12%', 'transform': 'translate(-50%, -50%)'}),
+    html.Div([
+        html.Div([
             html.H1("AI Yahtzee", style={"text-align": "center"}, id='dummy'),
             html.H6("Are you ready to challenge the Machine?", style={"text-align": "center"}),
             html.Div([
@@ -70,19 +93,6 @@ app.layout = html.Div([
                 html.Div(id='choice')
             ], style={"text-align": "center"}),
             html.Div(id='score'),
-            html.Div([
-                html.H6('SCOREBOARD'),
-                html.Div([
-                    html.Div('Total player score :', style={'display':'inline-block'}),
-                    html.Div(id='total_score', style={'display':'inline-block'}),
-                    html.Div(0, id='score_total', style={"text-align":'center', 'display':'inline-block', 'margin-left':10}),
-                ]),
-                html.Div([
-                    html.Div('Total bot score :', style={'display':'inline-block'}),
-                    html.Div(id='total_score_bot', style={'display':'inline-block'}),
-                    html.Div(0, id='score_total_bot', style={"text-align":'center', 'display':'inline-block', 'margin-left':10}),
-                ])
-            ], style={'position': 'absolute', 'top': '10%', 'left': '10%', 'transform': 'translate(-50%, -50%)'}),
             dcc.Checklist(id='available_choices', options=choices, style={'display': 'none'}),
         ]),
     ]),
@@ -201,9 +211,6 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
             ], style={'position': 'absolute', 'top': '65%', 'left': '80%', 'transform': 'translate(-50%, -50%)'})
         ])
 
-        # print(mem_dices)
-        # print(mem_held)
-        # print(rule)
         score_tot_bot = score_tot_bot[0] if type(score_tot_bot) is list else score_tot_bot
         return [player_score], updated_choices, {'text-align':'center'}, child, [score_tot_bot+s]
 
@@ -238,18 +245,17 @@ def update_rolls_left(n_clicks, avachoices):
 )
 def update_dices(n_clicks, keep1, keep2, keep3, keep4, keep5, choice):
     # roll dices that are not kept
-    print('update_dices keep1', keep1)
-    if keep1 is None or keep1==[]:
+    n_clicks = 0 if n_clicks is None else n_clicks
+    if keep1 is None or keep1==[] or n_clicks%3==0:
         game_state[0] = random.randint(1, 7)
-    if keep2 is None or keep2==[]:
+    if keep2 is None or keep2==[] or n_clicks%3==0:
         game_state[1] = random.randint(1, 7)
-    if keep3 is None or keep3==[]:
+    if keep3 is None or keep3==[] or n_clicks%3==0:
         game_state[2] = random.randint(1, 7)
-    if keep4 is None or keep4==[]:
+    if keep4 is None or keep4==[] or n_clicks%3==0:
         game_state[3] = random.randint(1, 7)
-    if keep5 is None or keep5==[]:
+    if keep5 is None or keep5==[] or n_clicks%3==0:
         game_state[4] = random.randint(1, 7)
-    print('game state', game_state, score('aces', game_state))
 
     # update dice images
     dice1_src = pil_images[game_state[0]-1]
@@ -266,7 +272,7 @@ def update_dices(n_clicks, keep1, keep2, keep3, keep4, keep5, choice):
 
     return dice1_src, dice2_src, dice3_src, dice4_src, dice5_src, score_text
 
-# 
+
 @app.callback(
     Output('button', 'children'),
     [Input('button', 'n_clicks')]
@@ -275,6 +281,19 @@ def switch_roll_submit(clicks):
     if clicks is None:
         return 'Roll Dices'
     return 'Roll Dices' if clicks%3!=2 else 'Submit'
+
+# Update the scoreboard when clicking the button
+@app.callback(
+    Output('dynamic_scoreboard', 'children'),
+    [Input('available_choices', 'options')]
+)
+def update_scoreboard(avachoices):
+    df=pd.DataFrame.from_dict({'Rules done':rules_index,
+                               'Player_':['' if e in avachoices else 'x' for e in rules_index], 
+                               'Machine':['' if e in choices_bot else 'x' for e in rules_index]})
+
+    return dash_table.DataTable(columns=[{"name": i, "id": i} for i in df.columns],
+                data=df.to_dict("rows"),style_data={'textAlign': 'center'}, style_header={'textAlign': 'center'})
 
 if __name__ == '__main__':
     app.run_server()
