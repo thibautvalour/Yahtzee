@@ -11,32 +11,37 @@ https://www.hasbro.com/common/instruct/yahtzee.pdf
 The project contains the following files:
 ```
 .
-├── requirements.txt
 ├── README.md
 ├── LICENSE.md
-├── app.py
-├── yahtzee_game
-│   ├── scoreboard.py
-│   ├── rules.py
-│   ├── main.py
-│   └── hand.py 
-│ 
-├── yahtzee_dash_app
-│   ├── images
-│   └── utils.py
-└── yahtzee_bot
-    ├── weights
-    ├── data.py
-    ├── hash.py
-    ├── network.py
-    ├── ppo_loss.py
-    ├── train.py
-    └── training.py
+└── project
+    ├── requirements.txt
+    ├── Dockerfile
+    └── app
+        ├── train.py
+        ├── app.py
+        ├── yahtzee_game
+        │   ├── scoreboard.py
+        │   ├── rules.py
+        │   ├── main.py
+        │   └── hand.py
+        ├── yahtzee_dash_app
+        │   ├── images
+        │   └── utils.py
+        └── yahtzee_bot
+            ├── weights
+            ├── data.py
+            ├── hash.py
+            ├── network.py
+            ├── ppo_loss.py
+            ├── train.py
+            └── training.py
+   
 ```
-The `yahtzee_bot/data` generates samples of parts played by the actions of the model.
-The `yahtzee_bot/train` generate a neural network used to find the best choice.
+The `project/app/yahtzee_bot/data` generates samples of parts played by the actions of the model.
 
-The `app.py`  implements the final user interface of the game.
+The `project/app/yahtzee_bot/train` generate a neural network used to find the best choice.
+
+The `project/app/app.py`  implements the final user interface of the game.
 
 ## Installation guide
 
@@ -46,11 +51,11 @@ To clone the repository:
 ```
 To play the game:
 ```bash
- $ Python app.py
+ $ Python project/app/app.py
  ```
 Training the bot with  desired parameters:
  ```bash
- $ Python yahtzee_bot/train.py -n_ite 100 -n_games 4096, use -h for more functionality.
+ $ Python project/app/yahtzee_bot/train.py -n_ite 100 -n_games 4096, use -h for more functionality.
  ```
 
 
