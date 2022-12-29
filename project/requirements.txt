@@ -19,7 +19,7 @@ python-dateutil==2.8.2
 pytz==2022.7
 six==1.16.0
 tenacity==8.1.0
-tensorflow==2.8.0
+tensorflow-cpu
 tqdm==4.62.3
 Werkzeug==2.2.2
 zipp==3.11.0
