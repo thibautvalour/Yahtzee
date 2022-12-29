@@ -22,6 +22,7 @@ pil_images = [Image.open(f"yahtzee_dash_app/images/dice_{idx}.png") for idx in r
 bot_image = Image.open(f"yahtzee_dash_app/images/robot_dice.jpg")
 
 app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
+server = app.server
 
 # initialize game state with all dices as 0
 game_state = [0, 3, 2, 5, 0]
@@ -296,4 +297,4 @@ def update_scoreboard(avachoices):
                 data=df.to_dict("rows"),style_data={'textAlign': 'center'}, style_header={'textAlign': 'center'})
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(host="0.0.0.0", port=8050, debug=True)
