@@ -16,6 +16,7 @@ The project contains the following files:
 └── project
     ├── requirements.txt
     ├── Dockerfile
+    ├── Dockerfile.prod
     └── app
         ├── train.py
         ├── app.py
@@ -43,6 +44,8 @@ The `project/app/yahtzee_bot/train` generate a neural network used to find the b
 
 The `project/app/app.py`  implements the final user interface of the game.
 
+There are also `the data_test`, `hash_test`, `network_test`, `training_test` files which are unit tests verifying the outputs of the defined functions.
+
 ## Installation guide
 
 To clone the repository:
@@ -57,8 +60,9 @@ Training the bot with  desired parameters:
  ```bash
  $ Python project/app/yahtzee_bot/train.py -n_ite 100 -n_games 4096, use -h for more functionality.
  ```
+### Online play 
 
-
+You can play online [here](https://aiyahtzee.herokuapp.com/)
  
 ## Contibutors
  * Augustin Combes
