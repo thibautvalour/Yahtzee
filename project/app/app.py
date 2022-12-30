@@ -224,6 +224,11 @@ def hit_submit(clicks, totscore, rule, avachoices, botstyle, score_tot_bot):
 )
 def update_rolls_left(n_clicks, avachoices):
     if n_clicks is None:
+        print('update_rolls_left: n_clicks is None')
+        global choices
+        global choices_bot
+        choices = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','yahtzee','chance']
+        choices_bot = ['aces','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','yahtzee','chance']
         return html.Div(['🎲']*2)
 
     n_clicks_left = 2-n_clicks%3
@@ -297,4 +302,4 @@ def update_scoreboard(avachoices):
                 data=df.to_dict("rows"),style_data={'textAlign': 'center'}, style_header={'textAlign': 'center'})
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", port=8050, debug=True)
+    app.run_server(host="0.0.0.0", port=8050, debug=False)
